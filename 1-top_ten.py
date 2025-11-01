@@ -11,31 +11,28 @@ def top_ten(subreddit):
 
     Args:
         subreddit: name of the subreddit
-    """
-    if not subreddit or not isinstance(subreddit, str):
-        print(None)
-        return
 
+    Returns:
+        None
+    """
     url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
+    headers = {'User-Agent': 'python:subreddit.topten:v1.0'}
     params = {'limit': 10}
 
     try:
         response = requests.get(url, headers=headers, params=params,
-                                allow_redirects=False)
-        
+                                allow_redirects=False, timeout=10)
         if response.status_code == 200:
             data = response.json()
-            posts = data.get('data', {}).get('children', [])
-            
-            for post in posts:
+            children = data.get('data', {}).get('children', [])
+            if not children:
+                print(None)
+                return
+            for post in children:
                 title = post.get('data', {}).get('title')
                 if title:
                     print(title)
         else:
             print(None)
-            
     except Exception:
         print(None)
