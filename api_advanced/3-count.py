@@ -1,34 +1,36 @@
 #!/usr/bin/python3
 """
-Module to recursively query Reddit API and count keyword occurrences.
+Module that recursively queries Reddit API and counts keyword occurrences.
 """
 import requests
 
 
 def count_words(subreddit, word_list, after=None, word_count=None):
     """
-    Recursively queries the Reddit API, parses titles, and prints
-    sorted keyword counts.
+    Recursively query Reddit API and print sorted keyword counts.
 
     Args:
-        subreddit (str): The name of the subreddit
-        word_list (list): List of keywords to count
-        after (str): Pagination token (default: None)
-        word_count (dict): Dictionary to track counts (default: None)
+        subreddit: name of the subreddit
+        word_list: list of keywords to count
+        after: pagination token
+        word_count: dictionary to track counts
 
     Returns:
-        None: Prints sorted keyword counts
+        None
     """
     if word_count is None:
         word_count = {}
 
-    url = f"https://www.reddit.com/r/{subreddit}/hot.json"
-    headers = {'User-Agent': 'MyRedditApp/0.0.1'}
+    if subreddit is None or not isinstance(subreddit, str):
+        return
+
+    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
+    headers = {'User-Agent': 'python:subreddit.wordcount:v1.0'}
     params = {'limit': 100, 'after': after}
 
     try:
         response = requests.get(url, headers=headers, params=params,
-                                allow_redirects=False)
+                                allow_redirects=False, timeout=10)
         if response.status_code != 200:
             return
 
@@ -44,7 +46,10 @@ def count_words(subreddit, word_list, after=None, word_count=None):
                 word_lower = word.lower()
                 count = sum(1 for w in words if w == word_lower)
                 if count > 0:
-                    word_count[word_lower] = word_count.get(word_lower, 0) + count
+                    if word_lower in word_count:
+                        word_count[word_lower] += count
+                    else:
+                        word_count[word_lower] = count
 
         if after is not None:
             return count_words(subreddit, word_list, after, word_count)
@@ -53,7 +58,7 @@ def count_words(subreddit, word_list, after=None, word_count=None):
                 sorted_counts = sorted(word_count.items(),
                                        key=lambda x: (-x[1], x[0]))
                 for word, count in sorted_counts:
-                    print(f"{word}: {count}")
+                    print("{}: {}".format(word, count))
 
     except Exception:
         return
